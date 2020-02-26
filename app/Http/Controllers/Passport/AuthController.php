@@ -8,14 +8,24 @@ use App\Http\Requests\Passport\AuthForget;
 use App\Http\Requests\Passport\AuthLogin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use App\Models\Plan;
 use App\Models\User;
 use App\Models\InviteCode;
 use App\Utils\Helper;
+use App\Utils\Dict;
 
 class AuthController extends Controller
 {
     public function register(AuthRegister $request)
     {
+        if ((int)config('v2board.email_whitelist_enable', 0)) {
+            if (!Helper::emailSuffixVerify(
+                $request->input('email'),
+                config('v2board.email_whitelist_suffix', Dict::EMAIL_WHITELIST_SUFFIX_DEFAULT))
+            ) {
+                abort(500, '邮箱后缀不处于白名单中');
+            }
+        }
         if ((int)config('v2board.stop_register', 0)) {
             abort(500, '本站已关闭注册');
         }
@@ -62,7 +72,7 @@ class AuthController extends Controller
         }
 
         // try out
-        if ((int)config('v2board.try_out_enable', 0)) {
+        if ((int)config('v2board.try_out_plan_id', 0)) {
             $plan = Plan::find(config('v2board.try_out_plan_id'));
             if ($plan) {
                 $user->transfer_enable = $plan->transfer_enable * 1073741824;
@@ -78,6 +88,8 @@ class AuthController extends Controller
         if ((int)config('v2board.email_verify', 0)) {
             Cache::forget($redisKey);
         }
+        $request->session()->put('email', $user->email);
+        $request->session()->put('id', $user->id);
         return response()->json([
             'data' => true
         ]);
@@ -104,16 +116,17 @@ class AuthController extends Controller
             abort(500, '该账户已被停止使用');
         }
 
+        $data = [
+            'token' => $user->token
+        ];
         $request->session()->put('email', $user->email);
         $request->session()->put('id', $user->id);
         if ($user->is_admin) {
             $request->session()->put('is_admin', true);
+            $data['is_admin'] = true;
         }
         return response([
-            'data' => [
-                'is_admin' => $user->is_admin ? 2 : 1,
-                'token' => $user->token
-            ]
+            'data' => $data
         ]);
     }
 
@@ -163,8 +176,14 @@ class AuthController extends Controller
 
     public function check(Request $request)
     {
+        $data = [
+            'is_login' => $request->session()->get('id') ? true : false
+        ];
+        if ($request->session()->get('is_admin')) {
+            $data['is_admin'] = true;
+        }
         return response([
-            'data' => $request->session()->get('id') ? true : false
+            'data' => $data
         ]);
     }
 
@@ -175,6 +194,9 @@ class AuthController extends Controller
             abort(500, '邮箱验证码有误');
         }
         $user = User::where('email', $request->input('email'))->first();
+        if (!$user) {
+            abort(500, '该邮箱不存在系统中');
+        }
         $user->password = password_hash($request->input('password'), PASSWORD_DEFAULT);
         $user->password_algo = NULL;
         if (!$user->save()) {
@@ -185,4 +207,5 @@ class AuthController extends Controller
             'data' => true
         ]);
     }
+
 }

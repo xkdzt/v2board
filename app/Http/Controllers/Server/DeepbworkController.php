@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Cache;
 
 class DeepbworkController extends Controller
 {
-    CONST SERVER_CONFIG = '{"api":{"services":["HandlerService","StatsService"],"tag":"api"},"stats":{},"inbound":{"port":443,"protocol":"vmess","settings":{"clients":[]},"streamSettings":{"network":"tcp"},"tag":"proxy"},"inboundDetour":[{"listen":"0.0.0.0","port":23333,"protocol":"dokodemo-door","settings":{"address":"0.0.0.0"},"tag":"api"}],"log":{"loglevel":"debug","access":"access.log","error":"error.log"},"outbound":{"protocol":"freedom","settings":{}},"routing":{"settings":{"rules":[{"inboundTag":["api"],"outboundTag":"api","type":"field"}]},"strategy":"rules"},"policy":{"levels":{"0":{"handshake":4,"connIdle":300,"uplinkOnly":5,"downlinkOnly":30,"statsUserUplink":true,"statsUserDownlink":true}}}}';
+    CONST SERVER_CONFIG = '{"api":{"services":["HandlerService","StatsService"],"tag":"api"},"stats":{},"inbound":{"port":443,"protocol":"vmess","settings":{"clients":[]},"sniffing":{"enabled": true,"destOverride": ["http","tls"]},"streamSettings":{"network":"tcp"},"tag":"proxy"},"inboundDetour":[{"listen":"0.0.0.0","port":23333,"protocol":"dokodemo-door","settings":{"address":"0.0.0.0"},"tag":"api"}],"log":{"loglevel":"debug","access":"access.log","error":"error.log"},"outbound":{"protocol":"freedom","settings":{}},"outboundDetour":[{"protocol":"blackhole","settings":{},"tag":"block"}],"routing":{"rules":[{"inboundTag":"api","outboundTag":"api","type":"field"}]},"policy":{"levels":{"0":{"handshake":4,"connIdle":300,"uplinkOnly":5,"downlinkOnly":30,"statsUserUplink":true,"statsUserDownlink":true}}}}';
 
     public function __construct(Request $request)
     {
@@ -110,11 +110,11 @@ class DeepbworkController extends Controller
         $nodeId = $request->input('node_id');
         $localPort = $request->input('local_port');
         if (empty($nodeId) || empty($localPort)) {
-            abort(1000, '参数错误');
+            abort(500, '参数错误');
         }
         $server = Server::find($nodeId);
         if (!$server) {
-            abort(1001, '节点不存在');
+            abort(500, '节点不存在');
         }
         $json = json_decode(self::SERVER_CONFIG);
         $json->inboundDetour[0]->port = (int)$localPort;
@@ -142,9 +142,34 @@ class DeepbworkController extends Controller
                     break;
             }
         }
+
+        if ($server->rules) {
+            $rules = json_decode($server->rules);
+            // domain
+            if (isset($rules->domain)) {
+                $domainObj = new \StdClass();
+                $domainObj->type = 'field';
+                $domainObj->domain = $rules->domain;
+                $domainObj->outboundTag = 'block';
+                array_push($json->routing->rules, $domainObj);
+            }
+            // protocol
+            if (isset($rules->protocol)) {
+                $protocolObj = new \StdClass();
+                $protocolObj->type = 'field';
+                $protocolObj->protocol = $rules->protocol;
+                $protocolObj->outboundTag = 'block';
+                array_push($json->routing->rules, $protocolObj);
+            }
+        }
+
         if ((int)$server->tls) {
-            $json->inbound->streamSettings->security = "tls";
-            $tls = (object)array("certificateFile" => "/home/v2ray.crt", "keyFile" => "/home/v2ray.key");
+            $json->inbound->streamSettings->security = 'tls';
+            $tls = (object)[
+                'certificateFile' => '/home/v2ray.crt',
+                'keyFile' => '/home/v2ray.key'
+            ];
+            $json->inbound->streamSettings->tlsSettings = new \StdClass();
             $json->inbound->streamSettings->tlsSettings->certificates[0] = $tls;
         }
 

@@ -2,9 +2,9 @@
 <html>
 
 <head>
-    <link rel="stylesheet" href="./antd.chunk.css?v={{$verison}}">
-    <link rel="stylesheet" href="./umi.css?v={{$verison}}">
-    <link rel="stylesheet" href="./custom.css?v={{$verison}}">
+    <link rel="stylesheet" href="/assets/user/antd.chunk.css?v={{$verison}}">
+    <link rel="stylesheet" href="/assets/user/umi.css?v={{$verison}}">
+    <link rel="stylesheet" href="/assets/user/custom.css?v={{$verison}}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no">
     <title>{{$title}}</title>
@@ -13,18 +13,23 @@
     <script>
         window.v2board = {
             title: '{{$title}}',
-            theme: '{{$theme}}',
+            theme: {
+                sidebar: '{{$theme_sidebar}}',
+                header: '{{$theme_header}}',
+                color: '{{$theme_color}}',
+            },
             verison: '{{$verison}}',
-            background_url: '{{$backgroun_url}}'
+            background_url: '{{$backgroun_url}}',
+            description: '{{$description}}'
         }
     </script>
 </head>
 
 <body>
 <div id="root"></div>
-<script src="./vendors.async.js?v={{$verison}}"></script>
-<script src="./antd.async.js?v={{$verison}}"></script>
-<script src="./umi.js?v={{$verison}}"></script>
+<script src="/assets/user/vendors.async.js?v={{$verison}}"></script>
+<script src="/assets/user/antd.async.js?v={{$verison}}"></script>
+<script src="/assets/user/umi.js?v={{$verison}}"></script>
 <!-- Global site tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-P1E9Z5LRRK"></script>
 <script>

@@ -14,15 +14,29 @@ use Illuminate\Http\Request;
 */
 
 Route::get('/', function (Request $request) {
-    if (config('v2board.app_url')) {
+    if (config('v2board.app_url') && config('v2board.safe_mode_enable', 0)) {
         if ($request->server('HTTP_HOST') !== parse_url(config('v2board.app_url'))['host']) {
             abort(403);
         }
     }
     return view('app', [
         'title' => config('v2board.app_name', 'V2Board'),
-        'theme' => config('v2board.frontend_theme', 1),
+        'theme_sidebar' => config('v2board.frontend_theme_sidebar', 'light'),
+        'theme_header' => config('v2board.frontend_theme_header', 'dark'),
+        'theme_color' => config('v2board.frontend_theme_color', 'default'),
         'backgroun_url' => config('v2board.frontend_background_url'),
-        'verison' => '1.0.3'
+        'verison' => config('app.version'),
+        'description' => config('v2board.app_description', 'V2Board is best')
+    ]);
+});
+
+Route::get('/admin', function () {
+    return view('admin', [
+        'title' => config('v2board.app_name', 'V2Board'),
+        'theme_sidebar' => config('v2board.frontend_theme_sidebar', 'light'),
+        'theme_header' => config('v2board.frontend_theme_header', 'dark'),
+        'theme_color' => config('v2board.frontend_theme_color', 'default'),
+        'backgroun_url' => config('v2board.frontend_background_url'),
+        'verison' => config('app.version')
     ]);
 });

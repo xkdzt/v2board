@@ -35,23 +35,15 @@ class ServerController extends Controller
 
     public function save(ServerSave $request)
     {
-        $params = $request->only([
-            'show',
-            'group_id',
-            'parent_id',
-            'name',
-            'host',
-            'port',
-            'server_port',
-            'tls',
-            'tags',
-            'rate',
-            'network',
-            'settings'
-        ]);
+        $params = $request->only(array_keys(ServerSave::RULES));
         $params['group_id'] = json_encode($params['group_id']);
         if (isset($params['tags'])) {
             $params['tags'] = json_encode($params['tags']);
+        }
+        if (isset($params['rules'])) {
+            if (!is_object(json_decode($params['rules']))) {
+                abort(500, '审计规则配置格式不正确');
+            }
         }
 
         if (isset($params['settings'])) {

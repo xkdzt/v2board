@@ -4,17 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\Admin\ConfigSave;
 use Illuminate\Http\Request;
+use App\Utils\Dict;
 use App\Http\Controllers\Controller;
 
 class ConfigController extends Controller
 {
-    public function init()
-    {
-
-    }
-
     public function fetch()
     {
+        // TODO: default should be in Dict
         return response([
             'data' => [
                 'invite' => [
@@ -24,16 +21,18 @@ class ConfigController extends Controller
                     'invite_never_expire' => config('v2board.invite_never_expire', 0)
                 ],
                 'site' => [
+                    'safe_mode_enable' => (int)config('v2board.safe_mode_enable', 0),
                     'stop_register' => (int)config('v2board.stop_register', 0),
                     'email_verify' => (int)config('v2board.email_verify', 0),
                     'app_name' => config('v2board.app_name', 'V2Board'),
+                    'app_description' => config('v2board.app_description', 'V2Board is best!'),
                     'app_url' => config('v2board.app_url'),
                     'subscribe_url' => config('v2board.subscribe_url'),
                     'plan_change_enable' => (int)config('v2board.plan_change_enable', 1),
-                    'plan_transfer_hour' => config('v2board.plan_transfer_hour', 12),
-                    'try_out_enable' => (int)config('v2board.try_out_enable', 0),
-                    'try_out_plan_id' => (int)config('v2board.try_out_plan_id'),
-                    'try_out_hour' => (int)config('v2board.try_out_hour', 1)
+                    'try_out_plan_id' => (int)config('v2board.try_out_plan_id', 0),
+                    'try_out_hour' => (int)config('v2board.try_out_hour', 1),
+                    'email_whitelist_enable' => (int)config('v2board.email_whitelist_enable', 0),
+                    'email_whitelist_suffix' => config('v2board.email_whitelist_suffix', Dict::EMAIL_WHITELIST_SUFFIX_DEFAULT)
                 ],
                 'pay' => [
                     // alipay
@@ -56,7 +55,9 @@ class ConfigController extends Controller
                     'paytaro_app_secret' => config('v2board.paytaro_app_secret')
                 ],
                 'frontend' => [
-                    'frontend_theme' => config('v2board.frontend_theme', 1),
+                    'frontend_theme_sidebar' => config('v2board.frontend_theme_sidebar', 'light'),
+                    'frontend_theme_header' => config('v2board.frontend_theme_header', 'dark'),
+                    'frontend_theme_color' => config('v2board.frontend_theme_color', 'default'),
                     'frontend_background_url' => config('v2board.frontend_background_url')
                 ],
                 'server' => [

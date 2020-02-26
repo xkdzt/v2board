@@ -84,4 +84,15 @@ class Helper
             default: return password_verify($password, $hash);
         }
     }
+
+    public static function emailSuffixVerify($email, $suffixs)
+    {
+        $suffix = preg_split('/@/', $email)[1];
+        if (!$suffix) return false;
+        if (!is_array($suffixs)) {
+            $suffixs = preg_split('/,/', $suffixs);
+        }
+        if (!in_array($suffix, $suffixs)) return false;
+        return true;
+    }
 }

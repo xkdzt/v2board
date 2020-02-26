@@ -14,7 +14,8 @@ class ClientController extends Controller
     {
         $user = $request->user;
         $server = [];
-        if ($user->expired_at > time()) {
+        // account not expired and is not banned.
+        if ($user->expired_at > time() && !$user->banned) {
             $servers = Server::where('show', 1)
                 ->orderBy('name')
                 ->get();
@@ -103,6 +104,7 @@ class ClientController extends Controller
             $array['cipher'] = 'auto';
             if ($item->tls) {
                 $array['tls'] = true;
+                $array['skip-cert-verify'] = true;
             }
             if ($item->network == 'ws') {
                 $array['network'] = $item->network;

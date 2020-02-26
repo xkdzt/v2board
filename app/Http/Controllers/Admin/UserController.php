@@ -15,9 +15,14 @@ class UserController extends Controller
     {
         $current = $request->input('current') ? $request->input('current') : 1;
         $pageSize = $request->input('pageSize') >= 10 ? $request->input('pageSize') : 10;
-        $userModel = User::orderBy('created_at', 'DESC');
+        $sortType = in_array($request->input('sort_type'), ['ASC', 'DESC']) ? $request->input('sort_type') : 'DESC';
+        $sort = $request->input('sort') ? $request->input('sort') : 'created_at';
+        $userModel = User::orderBy($sort, $sortType);
         if ($request->input('email')) {
             $userModel->where('email', $request->input('email'));
+        }
+        if ($request->input('invite_user_id')) {
+            $userModel->where('invite_user_id', $request->input('invite_user_id'));
         }
         $total = $userModel->count();
         $res = $userModel->forPage($current, $pageSize)
@@ -62,7 +67,12 @@ class UserController extends Controller
             'banned',
             'plan_id',
             'commission_rate',
-            'is_admin'
+            'discount',
+            'is_admin',
+            'u',
+            'd',
+            'balance',
+            'commission_balance'
         ]);
         $user = User::find($request->input('id'));
         if (!$user) {
@@ -76,7 +86,6 @@ class UserController extends Controller
         } else {
             unset($updateData['password']);
         }
-        $updateData['transfer_enable'] = $updateData['transfer_enable'] * 1073741824;
         if (isset($updateData['plan_id'])) {
             $plan = Plan::find($updateData['plan_id']);
             if (!$plan) {
